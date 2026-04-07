@@ -4,10 +4,11 @@
 //          stats sync for charts, system/last_sync display
 
 // ─── Device Registry ──────────────────────────────────────────────────────────
+// Keys must match exact Firebase DB node names: living_room, bedroom, fan
 const devices = {
-    living_light:  { title: "Living Room Light", id: "living-light",  power_rating: 60  },
-    bedroom_light: { title: "Bedroom Light",      id: "bedroom-light", power_rating: 40  },
-    fan:           { title: "Living Room Fan",    id: "fan",           power_rating: 75  }
+    living_room: { title: "Living Room Light", id: "living-light",  power_rating: 10 },
+    bedroom:     { title: "Bedroom Light",      id: "bedroom-light", power_rating: 8  },
+    fan:         { title: "Living Room Fan",    id: "fan",           power_rating: 15 }
 };
 
 // ─── Firebase State ───────────────────────────────────────────────────────────
@@ -27,16 +28,16 @@ if (isFirebaseActive) {
 
 // Local state map for header counter  (true = ON, false = OFF)
 const localDeviceStates = {
-    living_light:  false,
-    bedroom_light: false,
-    fan:           false
+    living_room: false,
+    bedroom:     false,
+    fan:         false
 };
 
 // Track when each device was turned ON (for usage_duration calculation)
 const deviceOnSince = {
-    living_light:  null,
-    bedroom_light: null,
-    fan:           null
+    living_room: null,
+    bedroom:     null,
+    fan:         null
 };
 
 // ─── Initialise on DOM Ready ───────────────────────────────────────────────────
@@ -312,9 +313,9 @@ function setupStatsListener() {
         const data = snapshot.val() || {};
         if (window.updateUsageChart) {
             window.updateUsageChart(
-                data.living_light  || 0,
-                data.bedroom_light || 0,
-                data.fan           || 0
+                data.living_room || 0,
+                data.bedroom     || 0,
+                data.fan         || 0
             );
         }
     });
@@ -324,9 +325,9 @@ function setupStatsListener() {
         const data = snapshot.val() || {};
         if (window.updatePowerChart) {
             window.updatePowerChart(
-                data.living_light  || 0,
-                data.bedroom_light || 0,
-                data.fan           || 0
+                data.living_room || 0,
+                data.bedroom     || 0,
+                data.fan         || 0
             );
         }
     });

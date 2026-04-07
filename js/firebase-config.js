@@ -5,7 +5,7 @@
 const firebaseConfig = {
     apiKey: "AIzaSyALNJIPyvUQOK0bWmrzA53RCuij9rFY6xY",
     authDomain: "homesync-2205.firebaseapp.com",
-    databaseURL: "https://homesync-2205-default-rtdb.firebaseio.com",
+    databaseURL: "https://homesync-2205-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "homesync-2205",
     storageBucket: "homesync-2205.firebasestorage.app",
     messagingSenderId: "403264507349",
