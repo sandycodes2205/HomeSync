@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity | HomeSync</title>
+    <meta name="description" content="HomeSync smart home dashboard — control lights, fan, and monitor real-time energy usage.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Firebase SDK v8 (compat, global object) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+<div class="dashboard-layout">
+
+    <!-- ─── Sidebar Navigation ─── -->
+    <nav class="dash-nav" role="navigation" aria-label="Dashboard navigation">
+        <a href="index.html" class="logo" aria-label="HomeSync home">
+            <span class="logo-serif">Home</span><span class="logo-sans">Sync</span>
+        </a>
+
+        <span class="nav-section-label">Main</span>
+        <ul class="nav-menu" role="list">
+            <li class="nav-item">
+                <a href="dashboard.html" class="nav-link" id="nav-overview" aria-current="page">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                    Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="energy.html" class="nav-link" id="nav-energy">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    Energy
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="devices.html" class="nav-link" id="nav-devices">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                    Devices
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="activity.html" class="nav-link active" id="nav-logs">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    Activity
+                </a>
+            </li>
+        </ul>
+
+        <span class="nav-section-label">Settings</span>
+        <ul class="nav-menu" role="list">
+            <li class="nav-item">
+                <a href="index.html" class="nav-link" id="nav-back">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                    Back to Home
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-bottom">
+            <div class="nav-user">
+                <img src="https://i.pravatar.cc/80?img=3" alt="Admin avatar" class="avatar">
+                <div class="nav-user-info">
+                    <div class="nav-username">Admin</div>
+                    <div class="nav-user-role">Smart Home Owner</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ─── Main Content ─── -->
+    <main class="dash-main" role="main">
+
+        <!-- Header -->
+        <header class="dash-header">
+            <div class="dash-header-left">
+                <h2>Good Morning 👋</h2>
+                <p id="dash-date">Loading date...</p>
+            </div>
+            <div class="dash-header-right">
+                <div class="header-quick-stats">
+                    <div class="header-stat">
+                        <div class="header-stat-value" id="header-devices-on">—</div>
+                        <div class="header-stat-label">Devices On</div>
+                    </div>
+                    <div class="header-divider"></div>
+                    <div class="header-stat">
+                        <div class="header-stat-value" id="header-energy-today">32 kWh</div>
+                        <div class="header-stat-label">Today's Usage</div>
+                    </div>
+                    <div class="header-divider"></div>
+                    <div class="header-stat">
+                        <div class="header-stat-value sync-value" id="last-sync-value">—</div>
+                        <div class="header-stat-label">Last Sync</div>
+                    </div>
+                </div>
+                <div class="user-profile">
+                    <span>Admin</span>
+                    <img src="https://i.pravatar.cc/80?img=3" alt="Admin user" class="avatar">
+                </div>
+            </div>
+        </header>
+
+        <!-- Scrollable area -->
+        <div class="dash-content">
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="summary-card" id="sc-devices">
+                    <div class="summary-card-top">
+                        <div class="summary-card-icon sc-violet">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                        </div>
+                        <span class="summary-card-trend trend-up" id="sc-trend-devices">↑ Active</span>
+                    </div>
+                    <div class="summary-card-value" id="sc-devices-value">0 / 3</div>
+                    <div class="summary-card-label">Devices Online</div>
+                </div>
+
+                <div class="summary-card" id="sc-temp">
+                    <div class="summary-card-top">
+                        <div class="summary-card-icon sc-green">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                        </div>
+                        <span class="summary-card-trend trend-up">↑ Optimal</span>
+                    </div>
+                    <div class="summary-card-value">24 °C</div>
+                    <div class="summary-card-label">Indoor Temp</div>
+                </div>
+                <div class="summary-card" id="sc-uptime">
+                    <div class="summary-card-top">
+                        <div class="summary-card-icon sc-blue">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        </div>
+                        <span class="summary-card-trend trend-up">↑ Good</span>
+                    </div>
+                    <div class="summary-card-value" id="sc-uptime-value">99.9%</div>
+                    <div class="summary-card-label">System Uptime</div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Grid -->
+            <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+                <div class="dashboard-col">
+                    <!-- Activity Log -->
+                    <div class="glass-panel" id="panel-log" style="padding: 24px;">
+                        <div class="panel-header" style="margin-bottom: 24px;">
+                            <h3 class="panel-title" style="font-size: 1.2rem;">Complete Activity History</h3>
+                            <span class="panel-action" id="clear-log-btn" onclick="clearUILog()" title="Clear logs" style="font-size: 0.85rem; padding: 6px 12px; background: var(--accent-violet-lt); border-radius: var(--r-md);">Clear History</span>
+                        </div>
+                        <ul class="activity-list" id="activity-log" role="log" aria-live="polite" aria-label="Device activity log" style="max-height: 500px; padding-right: 12px;" data-page="activity">
+                            <li class="activity-item" id="log-empty">
+                                <span class="activity-text" style="color: var(--text-faint)">Waiting for device events…</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Firebase Config, App Logic, Charts -->
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/charts.js"></script>
+</body>
+</html>

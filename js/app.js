@@ -6,9 +6,9 @@
 // ─── Device Registry ──────────────────────────────────────────────────────────
 // Keys must match exact Firebase DB node names: living_room, bedroom, fan
 const devices = {
-    living_room: { title: "Living Room Light", id: "living-light",  power_rating: 10 },
-    bedroom:     { title: "Bedroom Light",      id: "bedroom-light", power_rating: 8  },
-    fan:         { title: "Living Room Fan",    id: "fan",           power_rating: 15 }
+    living_room: { title: "Living Room Light", id: "living-light", power_rating: 10 },
+    bedroom: { title: "Bedroom Light", id: "bedroom-light", power_rating: 8 },
+    fan: { title: "Living Room Fan", id: "fan", power_rating: 15 }
 };
 
 // ─── Firebase State ───────────────────────────────────────────────────────────
@@ -29,21 +29,23 @@ if (isFirebaseActive) {
 // Local state map for header counter  (true = ON, false = OFF)
 const localDeviceStates = {
     living_room: false,
-    bedroom:     false,
-    fan:         false
+    bedroom: false,
+    fan: false
 };
 
 // Track when each device was turned ON (for usage_duration calculation)
 const deviceOnSince = {
     living_room: null,
-    bedroom:     null,
-    fan:         null
+    bedroom: null,
+    fan: null
 };
 
 // ─── Initialise on DOM Ready ───────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
     updateDashDate();
+    updateGreeting();
     setupRoomPills();
+    renderDevicesTable();
 
     if (isFirebaseActive && db) {
         // Ensure all devices exist in DB with defaults if they don't
@@ -57,6 +59,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // Periodic usage_duration tracking (every 60 s)
         setInterval(periodicMetadataUpdate, 60000);
+
     } else {
         console.warn("HomeSync: Running in demo mode — Firebase not connected.");
         setTimeout(() => {
@@ -72,10 +75,10 @@ function bootstrapDevices() {
         ref.once('value').then(snap => {
             if (!snap.exists()) {
                 ref.set({
-                    state:          false,
-                    last_updated:   new Date().toISOString(),
+                    state: false,
+                    last_updated: new Date().toISOString(),
                     usage_duration: 0,
-                    power_rating:   devices[deviceKey].power_rating
+                    power_rating: devices[deviceKey].power_rating
                 }).catch(e => console.warn("HomeSync: Bootstrap write failed:", e));
             }
         });
@@ -89,6 +92,27 @@ function updateDashDate() {
     el.textContent = new Date().toLocaleDateString('en-IN', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
+}
+
+// ─── Dynamic Greeting ────────────────────────────────────────────────────────
+function updateGreeting() {
+    const el = document.querySelector('.dash-header-left h2');
+    if (!el) return;
+
+    const hour = new Date().getHours();
+    let greeting = "";
+
+    if (hour >= 5 && hour < 12) {
+        greeting = "Good Morning 👋";
+    } else if (hour >= 12 && hour < 17) {
+        greeting = "Good Afternoon ☀️";
+    } else if (hour >= 17 && hour < 21) {
+        greeting = "Good Evening 🌆";
+    } else {
+        greeting = "Good Night 🌙";
+    }
+
+    el.textContent = greeting;
 }
 
 // ─── Room Pills (UI) ──────────────────────────────────────────────────────────
@@ -113,7 +137,7 @@ function setupFirebaseListeners() {
             const data = snapshot.val();
             if (data !== null && data !== undefined) {
                 // state is a boolean per database.md
-                updateUIState(deviceKey, data.state === true, data.last_updated);
+                updateUIState(deviceKey, data.state === true, data.last_updated, data.usage_duration || 0);
             }
         }, err => {
             console.error(`HomeSync: Listener error for ${deviceKey}:`, err);
@@ -122,7 +146,7 @@ function setupFirebaseListeners() {
 }
 
 // ─── Update UI for a Device ───────────────────────────────────────────────────
-function updateUIState(deviceKey, isON, lastUpdated) {
+function updateUIState(deviceKey, isON, lastUpdated, usageDuration = 0) {
     const deviceId = devices[deviceKey].id;
 
     // Local state
@@ -137,7 +161,7 @@ function updateUIState(deviceKey, isON, lastUpdated) {
     const statusEl = document.getElementById(`status-${deviceId}`);
     if (statusEl) {
         statusEl.textContent = isON ? 'On · Running' : 'Off · Standby';
-        statusEl.style.color  = isON ? 'var(--accent-violet)' : 'var(--text-muted)';
+        statusEl.style.color = isON ? 'var(--accent-violet)' : 'var(--text-muted)';
     }
 
     // Card active class
@@ -147,18 +171,54 @@ function updateUIState(deviceKey, isON, lastUpdated) {
     // Last updated
     const metaEl = document.getElementById(`meta-${deviceId}`);
     if (metaEl && lastUpdated) {
-        const d       = new Date(lastUpdated);
+        const d = new Date(lastUpdated);
         const timeStr = isNaN(d) ? lastUpdated : d.toLocaleTimeString([], {
             hour: '2-digit', minute: '2-digit', second: '2-digit'
         });
         metaEl.textContent = `Updated: ${timeStr}`;
     }
+
+    // Usage duration
+    const usageEl = document.getElementById(`usage-${deviceId}`);
+    if (usageEl) {
+        const mins = Math.floor(usageDuration / 60);
+        usageEl.textContent = `${mins}m`;
+    }
+}
+
+// ─── Render Devices Table ─────────────────────────────────────────────────────
+function renderDevicesTable() {
+    const tableBody = document.getElementById('devices-registry-table');
+    if (!tableBody) return;
+
+    let html = '';
+    Object.keys(devices).forEach(deviceKey => {
+        const id = devices[deviceKey].id;
+        const title = devices[deviceKey].title;
+        const rating = devices[deviceKey].power_rating;
+
+        html += `
+        <tr id="row-${id}" style="border-bottom: 1px solid var(--border-soft);">
+            <td style="padding: 16px; font-weight: 500; color: var(--text-primary);">${title}</td>
+            <td style="padding: 16px;"><span id="status-${id}" style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">Off · Standby</span></td>
+            <td style="padding: 16px; color: var(--text-muted);">${rating} W</td>
+            <td style="padding: 16px; color: var(--text-muted);" id="usage-${id}">0m</td>
+            <td style="padding: 16px; color: var(--text-muted); font-size: 0.85rem;" id="meta-${id}">—</td>
+            <td style="padding: 16px;">
+                <label class="switch" aria-label="Toggle ${title}" style="transform: scale(0.85); transform-origin: left; margin: 0;">
+                    <input type="checkbox" id="toggle-${id}" onchange="toggleDevice('${deviceKey}')">
+                    <span class="slider round"></span>
+                </label>
+            </td>
+        </tr>`;
+    });
+    tableBody.innerHTML = html;
 }
 
 // ─── Header & Summary Card Device Count ───────────────────────────────────────
 function updateHeaderDeviceCount() {
     const onCount = Object.values(localDeviceStates).filter(Boolean).length;
-    const total   = Object.keys(localDeviceStates).length;
+    const total = Object.keys(localDeviceStates).length;
 
     const headerEl = document.getElementById('header-devices-on');
     if (headerEl) headerEl.textContent = `${onCount} / ${total}`;
@@ -168,15 +228,15 @@ function updateHeaderDeviceCount() {
 
     const trendEl = document.getElementById('sc-trend-devices');
     if (trendEl) {
-        trendEl.textContent  = onCount > 0 ? `↑ ${onCount} Active` : '— All Off';
-        trendEl.className    = `summary-card-trend ${onCount > 0 ? 'trend-up' : 'trend-down'}`;
+        trendEl.textContent = onCount > 0 ? `↑ ${onCount} Active` : '— All Off';
+        trendEl.className = `summary-card-trend ${onCount > 0 ? 'trend-up' : 'trend-down'}`;
     }
 }
 
 // ─── Device Toggle (called from HTML onchange) ────────────────────────────────
 function toggleDevice(deviceKey) {
     const deviceId = devices[deviceKey].id;
-    const toggle   = document.getElementById(`toggle-${deviceId}`);
+    const toggle = document.getElementById(`toggle-${deviceId}`);
     if (!toggle) return;
 
     const newState = toggle.checked; // boolean: true = ON, false = OFF
@@ -191,12 +251,17 @@ function toggleDevice(deviceKey) {
 
         // Write boolean state + timestamp to Firebase
         db.ref('devices/' + deviceKey).update({
-            state:        newState,
+            state: newState,
             last_updated: now
         }).catch(err => console.error("HomeSync: Failed to update Firebase:", err));
 
-        // Log to Firebase /logs
-        logActivity(deviceKey, newState);
+        // Log to Firebase /logs & set active_log_id for Python to catch
+        const logKey = logActivity(deviceKey, newState);
+        if (logKey) {
+            db.ref('devices/' + deviceKey).update({
+                active_log_id: logKey
+            });
+        }
 
         // Update stats/power_consumption & stats/total_usage
         updateStats(deviceKey, newState);
@@ -214,20 +279,32 @@ function toggleDevice(deviceKey) {
 
 // ─── Firebase Activity Logging ────────────────────────────────────────────────
 function logActivity(deviceKey, state) {
-    if (!db) return;
-    db.ref('logs').push({
-        device:    devices[deviceKey].title,
-        action:    state ? 'ON' : 'OFF',
-        timestamp: Date.now()
+    if (!db) return null;
+    const current_time_str = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    const logRef = db.ref('logs').push();
+    logRef.set({
+        device: deviceKey,
+        state: state,
+        timestamp: current_time_str
     }).catch(err => console.warn("HomeSync: Log push failed:", err));
+    return logRef.key;
 }
 
-// ─── Activity Log Listener ────────────────────────────────────────────────────
 function setupLoggingListener() {
     if (!db) return;
-    db.ref('logs').limitToLast(10).on('child_added', snapshot => {
+    
+    // Default to last 15 items, but pull 50 on Activity log page
+    const logList = document.getElementById('activity-log');
+    const isActivityPage = logList && logList.getAttribute('data-page') === 'activity';
+    const limit = isActivityPage ? 50 : 15;
+
+    db.ref('logs').limitToLast(limit).on('child_added', snapshot => {
         const log = snapshot.val();
-        if (log) appendUILog(log.device, log.action, log.timestamp);
+        if (log) {
+            const devName = log.device;
+            let actionStr = log.state !== undefined ? log.state : log.action;
+            appendUILog(devName, actionStr, log.timestamp);
+        }
     });
 }
 
@@ -239,12 +316,13 @@ function appendUILog(deviceName, action, timestamp, isSystem = false) {
     const emptyItem = document.getElementById('log-empty');
     if (emptyItem) emptyItem.remove();
 
-    const li        = document.createElement('li');
-    li.className    = 'activity-item';
-    const isON      = (action === 'ON' || action === true);
-    const timeStr   = new Date(timestamp).toLocaleTimeString([], {
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-    });
+    const li = document.createElement('li');
+    li.className = 'activity-item';
+    const isON = (action === 'ON' || action === true);
+
+    const timeStr = typeof timestamp === 'string' && timestamp.includes(':')
+        ? timestamp
+        : new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     if (isSystem) {
         li.innerHTML = `
@@ -257,15 +335,18 @@ function appendUILog(deviceName, action, timestamp, isSystem = false) {
         li.innerHTML = `
             <span class="activity-dot ${isON ? '' : 'off'}"></span>
             <span class="activity-text">
-                ${deviceName} turned <strong class="${isON ? '' : 'act-off'}">${action}</strong>
+                ${deviceName} turned <strong class="${isON ? '' : 'act-off'}">${isON ? 'ON' : 'OFF'}</strong>
             </span>
             <span class="activity-time">${timeStr}</span>`;
     }
 
     logList.insertBefore(li, logList.firstChild);
 
-    // Cap at 15 entries
-    while (logList.children.length > 15) {
+    // Dynamic caps
+    const isActivityPage = logList.getAttribute('data-page') === 'activity';
+    const maxEntries = isActivityPage ? 50 : 15;
+
+    while (logList.children.length > maxEntries) {
         logList.removeChild(logList.lastChild);
     }
 }
@@ -288,9 +369,9 @@ function updateStats(deviceKey, isON) {
 
     // If device just turned OFF, calculate watt-hours used this session
     if (!isON && deviceOnSince[deviceKey]) {
-        const elapsedMs   = Date.now() - deviceOnSince[deviceKey];
-        const elapsedHrs  = elapsedMs / 3600000;
-        const wattHours   = +(powerRating * elapsedHrs).toFixed(3);
+        const elapsedMs = Date.now() - deviceOnSince[deviceKey];
+        const elapsedHrs = elapsedMs / 3600000;
+        const wattHours = +(powerRating * elapsedHrs).toFixed(3);
         deviceOnSince[deviceKey] = null;
 
         // Increment stats/power_consumption/{device}
@@ -314,8 +395,8 @@ function setupStatsListener() {
         if (window.updateUsageChart) {
             window.updateUsageChart(
                 data.living_room || 0,
-                data.bedroom     || 0,
-                data.fan         || 0
+                data.bedroom || 0,
+                data.fan || 0
             );
         }
     });
@@ -326,9 +407,18 @@ function setupStatsListener() {
         if (window.updatePowerChart) {
             window.updatePowerChart(
                 data.living_room || 0,
-                data.bedroom     || 0,
-                data.fan         || 0
+                data.bedroom || 0,
+                data.fan || 0
             );
+        }
+
+        // --- Calculate Total for Header ---
+        const totalWH = Object.values(data).reduce((acc, val) => acc + (typeof val === 'number' ? val : 0), 0);
+        const headerUsageEl = document.getElementById('header-energy-today');
+        if (headerUsageEl) {
+            // Display as kWh with 2 decimals
+            const totalKWh = totalWH / 1000;
+            headerUsageEl.textContent = `${totalKWh.toFixed(2)} kWh`;
         }
     });
 }
@@ -337,8 +427,8 @@ function setupStatsListener() {
 function setupSyncStatusListener() {
     if (!db) return;
     db.ref('system/last_sync').on('value', snapshot => {
-        const raw   = snapshot.val();
-        const el    = document.getElementById('last-sync-value');
+        const raw = snapshot.val();
+        const el = document.getElementById('last-sync-value');
         if (!el) return;
         if (raw) {
             const d = new Date(raw);
@@ -350,7 +440,6 @@ function setupSyncStatusListener() {
         }
     });
 }
-
 // ─── Periodic Usage Duration Tracking (every 60 s) ───────────────────────────
 function periodicMetadataUpdate() {
     if (!db) return;
@@ -362,7 +451,7 @@ function periodicMetadataUpdate() {
             db.ref('devices/' + deviceKey).transaction(current => {
                 if (current) {
                     current.usage_duration = (current.usage_duration || 0) + 60; // seconds
-                    current.last_updated   = now;
+                    current.last_updated = now;
                 }
                 return current;
             }).catch(e => console.warn("HomeSync: Usage duration update failed:", e));
@@ -380,3 +469,4 @@ function periodicMetadataUpdate() {
 
     console.log("HomeSync: Periodic metadata sync complete.");
 }
+
