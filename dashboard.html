@@ -99,6 +99,11 @@
                         <div class="header-stat-value" id="header-energy-today">32 kWh</div>
                         <div class="header-stat-label">Today's Usage</div>
                     </div>
+                    <div class="header-divider"></div>
+                    <div class="header-stat">
+                        <div class="header-stat-value sync-value" id="last-sync-value">—</div>
+                        <div class="header-stat-label">Last Sync</div>
+                    </div>
                 </div>
                 <div class="user-profile">
                     <span>Admin</span>
@@ -287,31 +292,32 @@
                         </div>
                     </div>
 
-                    <!-- Resource Bar Chart -->
-                    <div class="glass-panel" id="panel-resource">
+                    <!-- Device Usage Duration Bar Chart (Firebase) -->
+                    <div class="glass-panel" id="panel-usage">
                         <div class="panel-header">
-                            <h3 class="panel-title">Resource Usage</h3>
+                            <h3 class="panel-title">Device Usage Duration</h3>
+                            <span class="panel-badge firebase-badge">🔴 Live</span>
                         </div>
                         <div class="chart-legend">
                             <div class="legend-item">
-                                <span class="legend-dot" style="background:#8B5CF6"></span>HVAC
+                                <span class="legend-dot" style="background:#8B5CF6"></span>Living Room
                             </div>
                             <div class="legend-item">
-                                <span class="legend-dot" style="background:#10B981"></span>Lighting
+                                <span class="legend-dot" style="background:#10B981"></span>Bedroom
                             </div>
                             <div class="legend-item">
-                                <span class="legend-dot" style="background:#F97316"></span>Appliances
+                                <span class="legend-dot" style="background:#F97316"></span>Fan
                             </div>
                         </div>
                         <div class="chart-container" style="height:190px">
-                            <canvas id="resourceBarChart" role="img" aria-label="Weekly resource usage stacked bar chart"></canvas>
+                            <canvas id="deviceUsageChart" role="img" aria-label="Device usage duration bar chart"></canvas>
                         </div>
                     </div>
 
                     <!-- Activity Log -->
                     <div class="glass-panel" id="panel-log">
                         <div class="panel-header">
-                            <h3 class="panel-title">System Logs</h3>
+                            <h3 class="panel-title">Recent Activity</h3>
                             <span class="panel-action" id="clear-log-btn" onclick="clearUILog()" title="Clear logs">Clear</span>
                         </div>
                         <ul class="activity-list" id="activity-log" role="log" aria-live="polite" aria-label="Device activity log">
@@ -319,6 +325,17 @@
                                 <span class="activity-text" style="color: var(--text-faint)">Waiting for device events…</span>
                             </li>
                         </ul>
+                    </div>
+
+                    <!-- Power Consumption Pie Chart (Firebase) -->
+                    <div class="glass-panel" id="panel-power">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Power Consumption</h3>
+                            <span class="panel-badge firebase-badge">🔴 Live</span>
+                        </div>
+                        <div class="chart-container" style="height:220px">
+                            <canvas id="powerPieChart" role="img" aria-label="Power consumption pie chart by device"></canvas>
+                        </div>
                     </div>
 
                 </div>

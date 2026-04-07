@@ -1263,6 +1263,34 @@ input:checked + .mockup-slider::before { transform: translateX(16px); }
 }
 .panel-action:hover { opacity: 0.7; }
 
+/* Firebase Live badge */
+.panel-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: var(--r-full);
+    letter-spacing: 0.04em;
+    user-select: none;
+}
+.firebase-badge {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    animation: badge-pulse 2.5s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.55; }
+}
+
+/* Last Sync value in header */
+.sync-value {
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    color: var(--accent-green) !important;
+    font-family: var(--font-body) !important;
+    letter-spacing: 0.01em;
+}
+
 /* Custom select */
 .panel-select {
     border: none;
