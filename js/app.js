@@ -293,8 +293,7 @@ function logActivity(deviceKey, state) {
 function setupLoggingListener() {
     if (!db) return;
     
-    // Default to last 15 items, but pull 50 on Activity log page
-    const logList = document.getElementById('activity-log');
+    const logList = document.getElementById('device-events-list');
     const isActivityPage = logList && logList.getAttribute('data-page') === 'activity';
     const limit = isActivityPage ? 50 : 15;
 
@@ -308,12 +307,11 @@ function setupLoggingListener() {
     });
 }
 
-// ─── UI Log ───────────────────────────────────────────────────────────────────
 function appendUILog(deviceName, action, timestamp, isSystem = false) {
-    const logList = document.getElementById('activity-log');
+    const logList = document.getElementById('device-events-list');
     if (!logList) return;
 
-    const emptyItem = document.getElementById('log-empty');
+    const emptyItem = document.getElementById('events-empty');
     if (emptyItem) emptyItem.remove();
 
     const li = document.createElement('li');
@@ -353,10 +351,10 @@ function appendUILog(deviceName, action, timestamp, isSystem = false) {
 
 // ─── Clear UI Log ─────────────────────────────────────────────────────────────
 function clearUILog() {
-    const logList = document.getElementById('activity-log');
+    const logList = document.getElementById('device-events-list');
     if (!logList) return;
     logList.innerHTML = `
-        <li class="activity-item" id="log-empty">
+        <li class="activity-item" id="events-empty">
             <span class="activity-text" style="color:var(--text-faint)">Log cleared. Waiting for events…</span>
         </li>`;
 }
