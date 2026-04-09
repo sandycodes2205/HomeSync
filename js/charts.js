@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
                 datasets: [
                     {
-                        label: 'HVAC',
+                        label: 'Living Room',
                         data:  [30, 45, 28, 50, 40, 60, 55],
                         backgroundColor:      '#8B5CF6',
                         borderRadius:         { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         hoverBackgroundColor: '#7C3AED'
                     },
                     {
-                        label: 'Lighting',
+                        label: 'Bedroom',
                         data:  [15, 20, 18, 22, 25, 30, 28],
                         backgroundColor:      '#10B981',
                         borderRadius:         0,
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         hoverBackgroundColor: '#059669'
                     },
                     {
-                        label: 'Appliances',
+                        label: 'Fan',
                         data:  [10, 15, 20, 10, 12, 18, 20],
                         backgroundColor:      '#F97316',
                         borderRadius:         { topLeft: 0, topRight: 0, bottomLeft: 6, bottomRight: 6 },
